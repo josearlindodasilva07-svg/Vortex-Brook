@@ -5281,6 +5281,7 @@ end
 -- Lista de Ã¡udios
 local audios = {
     {Name = "Yamete Kudasai", ID = 108494476595033},
+    {Name = "The Stranglers ", ID = 89000935481839},
     {Name = "Gritinho", ID = 5710016194},
     {Name = "Jumpscare Horroroso", ID = 85435253347146},
     {Name = "Ãudio Alto", ID = 6855150757},
