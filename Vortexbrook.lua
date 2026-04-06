@@ -4192,41 +4192,62 @@ Troll:AddToggle({
 })
 
 
--- Toggle State for Lag Phone
+-- Toggle
 toggles.LagPhone = false
 
--- Function to Lag Game with Phone
-local function lagarJogoPhone(phonePath, maxTeleports)
-    if phonePath then
-        local teleportCount = 0
-        while teleportCount < maxTeleports and toggles.LagPhone do
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = phonePath.CFrame
-            clickNormally(phonePath)
-            teleportCount = teleportCount + 1
-            wait(0.01)
+-- Função
+local function lagarJogoPhone(phone, maxTeleports)
+    local plr = game.Players.LocalPlayer
+
+    local count = 0
+    while toggles.LagPhone and count < maxTeleports do
+        
+        if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            plr.Character.HumanoidRootPart.CFrame = phone.CFrame
         end
-    else
-        warn("Telefone nÃ£o encontrado.")
+
+        -- tenta pegar o telefone direto
+        pcall(function()
+            fireclickdetector(phone:FindFirstChildOfClass("ClickDetector"))
+        end)
+
+        count += 1
+        task.wait() -- mais rápido
     end
 end
 
--- Lag Phone Toggle
+-- Toggle UI
 Troll:AddToggle({
-    Name = "LAG CELULA",
+    Name = "LAG CELULAR",
     Default = false,
     Callback = function(state)
         toggles.LagPhone = state
+
         if state then
-            local phonePath = workspace:FindFirstChild("WorkspaceCom"):FindFirstChild("001_CommercialStores"):FindFirstChild("CommercialStorage1"):FindFirstChild("Store"):FindFirstChild("Tools"):FindFirstChild("Iphone")
-            if phonePath then
-                spawn(function()
-                    lagarJogoPhone(phonePath, 999999)
-                end)
-            else
-                warn("Telefone nÃ£o encontrado.")
+
+            -- 🔥 procura o telefone automaticamente
+            local phone = nil
+
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v.Name:lower():find("iphone") then
+                    phone = v
+                    break
+                end
             end
+
+            if not phone then
+                warn("❌ Telefone não encontrado")
+                return
+            end
+
+            print("✅ Telefone encontrado:", phone:GetFullName())
+
+            task.spawn(function()
+                lagarJogoPhone(phone, 999999)
+            end)
+
         else
-            print("Lag com Telefone desativado.")
+            print("❌ Lag desativado")
         end
     end
 })
