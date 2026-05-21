@@ -1,4 +1,4 @@
-local Libary = loadstring(game:HttpGet("https://pastefy.app/TDVrLL1q/raw"))()
+local Libary = loadstring(game:HttpGet("https://raw.githubusercontent.com/josearlindodasilva07-svg/Steal/refs/heads/main/Libary%20Vortex"))()
 
 workspace.FallenPartsDestroyHeight = -math.huge
 
@@ -9,10 +9,18 @@ local Window = Libary:MakeWindow({
     Flags = "VORTEX_HUB"
 })
 
-Window:AddMinimizeButton({
-    Button = { Image = "rbxassetid://85048051200797", BackgroundTransparency = 0 },
+local minimizeBtn = Window:AddMinimizeButton({
+    Button = { Image = "rbxassetid://117383275808403", BackgroundTransparency = 0 },
     Corner = { CornerRadius = UDim.new(35, 1) },
 })
+
+-- Adicionar borda roxa no botão
+if minimizeBtn and minimizeBtn.Button then
+    local roxoStroke = Instance.new("UIStroke")
+    roxoStroke.Thickness = 2
+    roxoStroke.Color = Color3.fromRGB(155, 48, 255) -- Roxo
+    roxoStroke.Parent = minimizeBtn.Button
+end
 
 local Tabstatus = Window:MakeTab({ Title = "STATUS", Icon = "rbxassetid://10723415903" })
 local Tabchat = Window:MakeTab({ Title = "CHAT", Icon = "rbxassetid://7734056608" })
@@ -270,7 +278,7 @@ local Section = Tabjogado:AddSection({
 Tabjogado:AddButton({
     Name = "FLY JOGADO",
     Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/josearlindodasilva07-svg/VORTEX-FLY/refs/heads/main/VORTEX%20FLY"))()
+        loadstring(game:HttpGet("https://pastebin.com/raw/mRWia1NF"))()
     end
 })
 
@@ -620,6 +628,13 @@ Tabjogado:AddToggle({
         else
             DisableESP()
         end
+    end
+})
+
+Tabjogado:AddButton({
+    Name = "SCRIPT ESP",
+    Callback = function()
+        loadstring(game:HttpGet("https://pastefy.app/XaaRXmoj/raw"))()
     end
 })
 -------------------------PRICIPAL---------------------------------------
@@ -5626,3 +5641,44 @@ Tabconfg:AddButton({
     loadstring(game:HttpGet("https://pastebin.com/raw/RUr10TJ0"))()
     end
 })
+
+-- ========== FOTO DO SEU PERSONAGEM NA ABA STATUS ==========
+
+-- Container da foto
+local fotoContainer = Instance.new("Frame")
+fotoContainer.Size = UDim2.new(1, 0, 0, 60)
+fotoContainer.Position = UDim2.new(0, 0, 0, 5)
+fotoContainer.BackgroundTransparency = 1
+fotoContainer.Parent = Tabstatus.Cont
+
+-- Sua foto
+local foto = Instance.new("ImageLabel")
+foto.Size = UDim2.new(0, 50, 0, 50)
+foto.Position = UDim2.new(0, 10, 0.5, -25)
+foto.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+foto.BackgroundTransparency = 0
+foto.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. game.Players.LocalPlayer.UserId .. "&width=420&height=420&format=png"
+foto.Parent = fotoContainer
+
+-- Deixar redonda
+local redondo = Instance.new("UICorner")
+redondo.CornerRadius = UDim.new(1, 0)
+redondo.Parent = foto
+
+-- Borda roxa na foto
+local bordaRoxa = Instance.new("UIStroke")
+bordaRoxa.Thickness = 2
+bordaRoxa.Color = Color3.fromRGB(155, 48, 255)
+bordaRoxa.Parent = foto
+
+-- Seu nome do lado da foto
+local nomeLabel = Instance.new("TextLabel")
+nomeLabel.Size = UDim2.new(0, 150, 0, 50)
+nomeLabel.Position = UDim2.new(0, 70, 0.5, -25)
+nomeLabel.Text = game.Players.LocalPlayer.Name
+nomeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+nomeLabel.BackgroundTransparency = 1
+nomeLabel.Font = Enum.Font.GothamBold
+nomeLabel.TextSize = 14
+nomeLabel.TextXAlignment = Enum.TextXAlignment.Left
+nomeLabel.Parent = fotoContainer
