@@ -27,12 +27,211 @@ local Tabchat = Window:MakeTab({ Title = "CHAT", Icon = "rbxassetid://7734056608
 local Tabjogado = Window:MakeTab({"JOGADOR", "user"})
 local Tabprici = Window:MakeTab({ "AVATA", "rbxassetid://10734952036" })
 local Troll = Window:MakeTab({ Title = "TROLL", Icon = "rbxassetid://131153193945220" })
+local TabPirralho = Window:MakeTab({ Title = "PIRRALHO", Icon = "rbxassetid://10723415903" })
 local protec = Window:MakeTab({ Title = "ANTI", Icon = "rbxassetid://11322093465" })
 local Tabcasa = Window:MakeTab({"CASA", "home"})
 local Tab = Window:MakeTab({"TELEPORT", "tp"})
 local CarTab = Window:MakeTab({"VEÍCULO", "car"})
 local Tabconfg = Window:MakeTab({ Title = "CONFIG", Icon = "settings" })
 ----------------------------------------------------------------
+
+-- ========== VELOCIDADE DO CARRO ==========
+
+CarTab:AddSection({ Name = "Velocidade Do Carro Sem GamePass" })
+
+local carSpeed = 25
+local turboValue = "25"
+
+CarTab:AddTextBox({
+    Name = "Definir Velocidade",
+    Description = "Velocidade do carro preencher o espaço",
+    PlaceholderText = "Velocidade",
+    Callback = function(Value)
+        carSpeed = tonumber(Value) or carSpeed
+    end
+})
+
+CarTab:AddTextBox({
+    Name = "Definir Turbo",
+    Description = "Valor turbo (Velocidade add)",
+    PlaceholderText = "Turbo",
+    Callback = function(Value)
+        turboValue = tostring(Value)
+    end
+})
+
+CarTab:AddButton({
+    Name = "Mudar Velocidade e Turbo",
+    Callback = function()
+        local vehicles = workspace:FindFirstChild("Vehicles")
+        local car = vehicles and vehicles:FindFirstChild(game.Players.LocalPlayer.Name .. "Car")
+        local seatsFolder = car and car:FindFirstChild("Seats")
+        local seatInSeats = seatsFolder and seatsFolder:FindFirstChild("VehicleSeat")
+        if seatInSeats then
+            local maxSpeed = seatInSeats:FindFirstChild("MaxSpeed")
+            if maxSpeed and maxSpeed:IsA("NumberValue") then
+                maxSpeed.Value = carSpeed
+            end
+
+            local turbo = seatInSeats:FindFirstChild("Turbo")
+            if turbo and turbo:IsA("StringValue") then
+                turbo.Value = turboValue
+            end
+        end
+
+        local bodyFolder = car and car:FindFirstChild("Body")
+        local seatInBody = bodyFolder and bodyFolder:FindFirstChild("VehicleSeat")
+        if seatInBody then
+            local topSpeed = seatInBody:FindFirstChild("TopSpeed")
+            if topSpeed and topSpeed:IsA("NumberValue") then
+                topSpeed.Value = carSpeed
+            end
+
+            local turbo = seatInBody:FindFirstChild("Turbo")
+            if turbo and turbo:IsA("StringValue") then
+                turbo.Value = turboValue
+            end
+        end
+        
+        -- Notificação (opcional)
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Velocidade Aplicada",
+            Text = "Velocidade: " .. carSpeed .. " | Turbo: " .. turboValue,
+            Duration = 4
+        })
+    end
+})
+
+-- ========== PIRRALHOS (ABA SEPARADA) ==========
+
+TabPirralho:AddSection({ Name = "Pirralhos Trolagem <filho>" })
+
+local playerDropdown = TabPirralho:AddDropdown({
+    Name = "Escolher Jogador",
+    Description = "Selecione quem o pirralho irá seguir",
+    Options = {},
+    Default = "Boneco",
+    Callback = function(selected)
+        chasingplayer = game.Players:FindFirstChild(selected) and selected or nil
+    end
+})
+
+local nomesRP = { "Bebê", "Criança", "Filho", "Pirralho", "Adotado" }
+
+TabPirralho:AddDropdown({
+    Name = "Selecionar Nome RP",
+    Description = "Escolha Uma Tag para o pirralho",
+    Options = nomesRP,
+    Default = "Nome",
+    Callback = function(nomeEscolhido)
+        local evento = game:GetService("ReplicatedStorage"):FindFirstChild("RE") and game:GetService("ReplicatedStorage").RE:FindFirstChild("1RPNam1eTex1t")
+        if evento then 
+            evento:FireServer("RolePlayFollow", nomeEscolhido) 
+        end
+    end
+})
+
+local parteMapeada = {
+    ["Cabeça"] = "Head",
+    ["Peito Superior"] = "UpperTorso",
+    ["Barriga Inferior"] = "LowerTorso",
+    ["Frente do Corpo"] = "HumanoidRootPart",
+    ["Frente"] = "HumanoidRootPart",
+    ["Traseiro"] = "HumanoidRootPart"
+}
+
+local parteSelecionada = "HumanoidRootPart"
+
+TabPirralho:AddDropdown({
+    Name = "Parte do Corpo",
+    Description = "Onde o pirralho ficará preso no corpo",  -- ⬅️ TEXTO ORIGINAL MANTIDO
+    Options = {"Cabeça", "Peito Superior", "Barriga Inferior", "Frente do Corpo", "Frente", "Traseiro"},
+    Default = "Partes",
+    Callback = function(opcao)
+        parteSelecionada = parteMapeada[opcao] or "HumanoidRootPart"
+    end
+})
+
+TabPirralho:AddToggle({
+    Name = "Visualizar Jogador",
+    Default = false,
+    Callback = function(value)
+        local function UpdateCamera()
+            local targetPlayer = value and game.Players:FindFirstChild(chasingplayer)
+            local subject = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+            
+            if targetPlayer and targetPlayer.Character then
+                subject = targetPlayer.Character:FindFirstChild("Humanoid")
+            end
+            
+            if subject then workspace.CurrentCamera.CameraSubject = subject end
+        end
+
+        if value then
+            if not getgenv().CameraConnection then
+                getgenv().CameraConnection = game:GetService("RunService").Heartbeat:Connect(UpdateCamera)
+            end
+        else
+            if getgenv().CameraConnection then
+                getgenv().CameraConnection:Disconnect()
+                getgenv().CameraConnection = nil
+            end
+            UpdateCamera()
+        end
+    end
+})
+
+TabPirralho:AddButton({
+    Name = "Atualizar Jogadores",
+    Callback = function()
+        local lista = {}
+        for _, v in ipairs(game.Players:GetPlayers()) do
+            if v ~= game.Players.LocalPlayer then
+                table.insert(lista, v.Name)
+            end
+        end
+        playerDropdown:Set(lista)
+    end
+})
+
+TabPirralho:AddButton({
+    Name = "Enviar Pirralho",
+    Callback = function()
+        if not chasingplayer then 
+            warn("Nenhum jogador selecionado!") 
+            return 
+        end
+        
+        local targetChar = workspace:FindFirstChild(chasingplayer)
+        if not targetChar then 
+            warn("Jogador alvo não encontrado no workspace.") 
+            return 
+        end
+
+        local pl = game.Players.LocalPlayer
+        if not workspace:FindFirstChild(pl.Name) or not workspace[pl.Name]:FindFirstChild("FollowCharacter") then
+            game:GetService("ReplicatedStorage").RE:FindFirstChild("1Bab1yFollo1w"):FireServer("CharacterFollowSpawnPlayer", "BabyBoy")
+            task.wait(0.3)
+        end
+
+        local pirralho = workspace[pl.Name] and workspace[pl.Name]:FindFirstChild("FollowCharacter")
+        local parteAlvo = targetChar:FindFirstChild(parteSelecionada)
+
+        if pirralho and parteAlvo then
+            pirralho.Parent = targetChar
+            if getgenv().RunService then getgenv().RunService:Disconnect() end
+
+            getgenv().RunService = game:GetService("RunService").Heartbeat:Connect(function()
+                if pirralho and pirralho:FindFirstChild("Torso") then
+                    pirralho.Torso.BodyPosition.Position = parteAlvo.Position
+                    pirralho.Torso.BodyGyro.CFrame = parteAlvo.CFrame
+                end
+            end)
+        else
+            warn("A parte '" .. parteSelecionada .. "' não existe no jogador alvo.")
+        end
+    end
+})
 
 Tabstatus:AddSection({ Name = "STATUS" })
 
@@ -276,16 +475,9 @@ local Section = Tabjogado:AddSection({
 })
 
 Tabjogado:AddButton({
-    Name = "FLY JOGADO",
-    Callback = function()
-        loadstring(game:HttpGet("https://pastebin.com/raw/mRWia1NF"))()
-    end
-})
-
-Tabjogado:AddButton({
     Name = "Free Cam Tool",
     Callback = function()
-        loadstring(game:HttpGet("https://pastebin.com/raw/8QQTsEMD"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/josearlindodasilva07-svg/Desync/refs/heads/main/Free%20Cam"))()
     end
 })
 
@@ -798,142 +990,165 @@ Tabprici:AddToggle({
 })
 
 
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+-- ========== SISTEMA DE AVATARES (SUBSTITUIR) ==========
+
+Tabprici:AddSection({ Name = "Sistema de Avatares" })
 
 local Target = nil
-
-local function GetPlayerNames()
-    local PlayerNames = {}
-    for _, player in ipairs(Players:GetPlayers()) do
-        table.insert(PlayerNames, player.Name)
-    end
-    return PlayerNames
-end
-
-local Dropdown = Tabprici:AddDropdown({
-    Name = "SELECIONAR JOGADOR",
-    Options = GetPlayerNames(),
+local Playestt = Tabprici:AddDropdown({
+    Name = "Selecionar Jogador",
+    Description = " ",
+    Options = {},
     Default = Target,
     Callback = function(Value)
         Target = Value
     end
 })
 
--- // Atualizar Dropdown dinamicamente
-local function UpdateDropdown()
-    local lista = GetPlayerNames()
-
-    if Dropdown.Set then
-        Dropdown:Set(lista)
-    elseif Dropdown.Refresh then
-        Dropdown:Refresh(lista, true)
-    end
-end
-
-Tabprici:AddButton({
-    Name = "ATUALIZAR A LISTA",
-    Callback = function()
-        UpdateDropdown()
+Tabprici:AddSlider({
+    Name = "Verificação De Parts <Update>",
+    Min = 5,
+    Max = 15,
+    Default = 25,
+    Callback = function(Value)
+        print("funcionando ooooo")
     end
 })
 
--- // BotÃ£o: Copiar Avatar
 Tabprici:AddButton({
-    Name = "COPIAR AVATAR",
+    Name = "Atualizar lista",
     Callback = function()
+        local novaTabela = {}
+        for _, v in pairs(game.Players:GetPlayers()) do
+            if v ~= game.Players.LocalPlayer then
+                table.insert(novaTabela, v.Name)
+            end
+        end
+        Playestt:Set(novaTabela)
+    end
+})  
+
+Tabprici:AddButton({
+    Name = "Copiar Avatar",
+    Callback = function()
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Copy Avatar...",
+            Text = "copying avatar please wait",
+            Duration = 4
+        })
+
+        if not Remotes then
+            warn("Pasta Remotes não encontrada.")
+            return
+        end
+
+        local function wearItem(id, remotes)
+            if not tonumber(id) then return end
+            for _, nome in ipairs(remotes) do
+                local remote = Remotes:FindFirstChild(nome)
+                if remote then
+                    remote:InvokeServer(tonumber(id))
+                    task.wait(0.2)
+                    return true
+                end
+            end
+        end
+
+        local function safeFire(nome, ...)
+            local remote = Remotes:FindFirstChild(nome)
+            if remote then
+                remote:FireServer(...)
+                task.wait(0.2)
+            end
+        end
+
         if not Target then return end
 
         local LP = Players.LocalPlayer
         local LChar = LP.Character
         local TPlayer = Players:FindFirstChild(Target)
 
-        if not (TPlayer and TPlayer.Character) then return end
+        if TPlayer and TPlayer.Character then
+            local LHumanoid = LChar and LChar:FindFirstChildOfClass("Humanoid")
+            local THumanoid = TPlayer.Character:FindFirstChildOfClass("Humanoid")
 
-        local LHumanoid = LChar and LChar:FindFirstChildOfClass("Humanoid")
-        local THumanoid = TPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if LHumanoid and THumanoid then
+                local LDesc = LHumanoid:GetAppliedDescription()
 
-        if not (LHumanoid and THumanoid) then return end
+                for _, acc in ipairs(LDesc:GetAccessories(true)) do
+                    wearItem(acc.AssetId, {"WearAccessory", "Wear"})
+                end
 
-        
-        local LDesc = LHumanoid:GetAppliedDescription()
+                wearItem(LDesc.Shirt, {"WearShirt", "WearOutfit", "Wear"})
+                wearItem(LDesc.Pants, {"WearPants", "WearOutfit", "Wear"})
+                wearItem(LDesc.Face, {"WearFace", "Wear"})
 
-        for _, acc in ipairs(LDesc:GetAccessories(true)) do
-            if acc.AssetId and tonumber(acc.AssetId) then
-                Remotes.Wear:InvokeServer(tonumber(acc.AssetId))
-                task.wait(0.2)
+                local PDesc = THumanoid:GetAppliedDescription()
+                local argsBody = {
+                    [1] = {
+                        PDesc.Torso or 0,
+                        PDesc.RightArm or 0,
+                        PDesc.LeftArm or 0,
+                        PDesc.RightLeg or 0,
+                        PDesc.LeftLeg or 0,
+                        PDesc.Head or 0
+                    }
+                }
+
+                local remoteBody = Remotes:FindFirstChild("ChangeCharacterBody")
+                if remoteBody then
+                    remoteBody:InvokeServer(unpack(argsBody))
+                    task.wait(0.3)
+                else
+                    warn("RemoteFunction 'ChangeCharacterBody' não encontrado.")
+                end
+
+                wearItem(PDesc.Shirt, {"WearShirt", "WearOutfit", "Wear"})
+                wearItem(PDesc.Pants, {"WearPants", "WearOutfit", "Wear"})
+                wearItem(PDesc.Face, {"WearFace", "Wear"})
+
+                for _, acc in ipairs(PDesc:GetAccessories(true)) do
+                    wearItem(acc.AssetId, {"WearAccessory", "Wear"})
+                end
+
+                wearItem(PDesc.IdleAnimation, {"WearAnimation", "Wear"})
+
+                local SkinColor = TPlayer.Character:FindFirstChild("Body Colors")
+                if SkinColor then
+                    safeFire("ChangeBodyColor", tostring(SkinColor.HeadColor))
+                end
+
+                local Bag = TPlayer:FindFirstChild("PlayersBag")
+                if Bag then
+                    local function sendText(childName, remoteKey)
+                        local c = Bag:FindFirstChild(childName)
+                        if c and c.Value ~= "" then
+                            safeFire("RPNameText", remoteKey, c.Value)
+                        end
+                    end
+
+                    sendText("RPName", "RolePlayName")
+                    sendText("RPBio", "RolePlayBio")
+
+                    if Bag:FindFirstChild("RPNameColor") then
+                        safeFire("RPNameColor", "PickingRPNameColor", Bag.RPNameColor.Value)
+                    end
+                    if Bag:FindFirstChild("RPBioColor") then
+                        safeFire("RPNameColor", "PickingRPBioColor", Bag.RPBioColor.Value)
+                    end
+                end
             end
         end
 
-        if tonumber(LDesc.Shirt) then
-            Remotes.Wear:InvokeServer(tonumber(LDesc.Shirt))
-            task.wait(0.2)
-        end
-
-        if tonumber(LDesc.Pants) then
-            Remotes.Wear:InvokeServer(tonumber(LDesc.Pants))
-            task.wait(0.2)
-        end
-
-        if tonumber(LDesc.Face) then
-            Remotes.Wear:InvokeServer(tonumber(LDesc.Face))
-            task.wait(0.2)
-        end
-
-        -- // Copiar do jogador selecionado
-        local PDesc = THumanoid:GetAppliedDescription()
-
-        -- Trocar corpo
-        local argsBody = {
-            [1] = {
-                [1] = PDesc.Torso,
-                [2] = PDesc.RightArm,
-                [3] = PDesc.LeftArm,
-                [4] = PDesc.RightLeg,
-                [5] = PDesc.LeftLeg,
-                [6] = PDesc.Head
-            }
-        }
-        Remotes.ChangeCharacterBody:InvokeServer(unpack(argsBody))
-        task.wait(0.5)
-
-        -- Aplicar roupas e face
-        if tonumber(PDesc.Shirt) then
-            Remotes.Wear:InvokeServer(tonumber(PDesc.Shirt))
-            task.wait(0.3)
-        end
-
-        if tonumber(PDesc.Pants) then
-            Remotes.Wear:InvokeServer(tonumber(PDesc.Pants))
-            task.wait(0.3)
-        end
-
-        if tonumber(PDesc.Face) then
-            Remotes.Wear:InvokeServer(tonumber(PDesc.Face))
-            task.wait(0.3)
-        end
-
-        -- Aplicar acessÃ³rios
-        for _, acc in ipairs(PDesc:GetAccessories(true)) do
-            if acc.AssetId and tonumber(acc.AssetId) then
-                Remotes.Wear:InvokeServer(tonumber(acc.AssetId))
-                task.wait(0.3)
-            end
-        end
-
-        -- Copiar cor de pele
-        local SkinColor = TPlayer.Character:FindFirstChild("Body Colors")
-        if SkinColor then
-            Remotes.ChangeBodyColor:FireServer(tostring(SkinColor.HeadColor))
-            task.wait(0.3)
-        end
-
-        -- Copiar animaÃ§Ã£o (Idle)
-        if tonumber(PDesc.IdleAnimation) then
-            Remotes.Wear:InvokeServer(tonumber(PDesc.IdleAnimation))
-            task.wait(0.3)
-        end
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Notification",
+            Text = "Avatar Successfully Copied",
+            Duration = 4
+        })
     end
 })
 
@@ -4580,20 +4795,23 @@ protec:AddToggle({
     end
 })
 
+local AntiLagEnabled = false
+
 protec:AddToggle({
     Name = "ANTI-LAG",
     Description = "",
     Default = false,
     Callback = function(state)
+
+        AntiLagEnabled = state
+
+        if not state then
+            return
+        end
+
         local Players = game:GetService("Players")
         local dedupLock = {}
-        local IGNORED_PLAYER
-
-        if not state then return end
-
-        local function marcarIgnorado(player)
-            IGNORED_PLAYER = player
-        end
+        local IGNORED_PLAYER = Players.LocalPlayer
 
         local function isTargetTool(inst)
             return inst:IsA("Tool")
@@ -4601,62 +4819,106 @@ protec:AddToggle({
 
         local function gatherTools(player)
             local found = {}
+
             local containers = {}
-            if player.Character then table.insert(containers, player.Character) end
+
+            if player.Character then
+                table.insert(containers, player.Character)
+            end
+
             local backpack = player:FindFirstChildOfClass("Backpack")
-            if backpack then table.insert(containers, backpack) end
+            if backpack then
+                table.insert(containers, backpack)
+            end
+
             local sg = player:FindFirstChild("StarterGear")
-            if sg then table.insert(containers, sg) end
+            if sg then
+                table.insert(containers, sg)
+            end
+
             for _, container in ipairs(containers) do
                 for _, child in ipairs(container:GetChildren()) do
-                    if isTargetTool(child) then table.insert(found, child) end
+                    if isTargetTool(child) then
+                        table.insert(found, child)
+                    end
                 end
             end
+
             return found
         end
 
         local function dedupePlayer(player)
+            if not AntiLagEnabled then return end
             if player == IGNORED_PLAYER then return end
             if dedupLock[player] then return end
+
             dedupLock[player] = true
+
             local tools = gatherTools(player)
+
             if #tools > 1 then
-                for i = 2, #tools do pcall(function() tools[i]:Destroy() end) end
+                for i = 2, #tools do
+                    pcall(function()
+                        tools[i]:Destroy()
+                    end)
+                end
             end
+
             dedupLock[player] = false
         end
 
         local function hookPlayer(player)
-            if not IGNORED_PLAYER then marcarIgnorado(player) end
-            task.defer(dedupePlayer, player)
+
+            task.defer(function()
+                dedupePlayer(player)
+            end)
+
             local function setupChar(char)
-                task.delay(0.5, function() dedupePlayer(player) end)
+
+                task.delay(0.5, function()
+                    dedupePlayer(player)
+                end)
+
                 char.ChildAdded:Connect(function(child)
-                    if isTargetTool(child) then task.delay(0.1, function() dedupePlayer(player) end) end
+                    if AntiLagEnabled and isTargetTool(child) then
+                        task.delay(0.1, function()
+                            dedupePlayer(player)
+                        end)
+                    end
                 end)
             end
-            if player.Character then setupChar(player.Character) end
+
+            if player.Character then
+                setupChar(player.Character)
+            end
+
             player.CharacterAdded:Connect(setupChar)
-            local backpack = player:WaitForChild("Backpack", 10)
+
+            local backpack = player:FindFirstChildOfClass("Backpack")
+
             if backpack then
                 backpack.ChildAdded:Connect(function(child)
-                    if isTargetTool(child) then task.delay(0.1, function() dedupePlayer(player) end) end
-                end)
-            end
-            local sg = player:FindFirstChild("StarterGear") or player:WaitForChild("StarterGear", 10)
-            if sg then
-                sg.ChildAdded:Connect(function(child)
-                    if isTargetTool(child) then task.delay(0.1, function() dedupePlayer(player) end) end
+                    if AntiLagEnabled and isTargetTool(child) then
+                        task.delay(0.1, function()
+                            dedupePlayer(player)
+                        end)
+                    end
                 end)
             end
         end
 
+        for _, plr in ipairs(Players:GetPlayers()) do
+            hookPlayer(plr)
+        end
+
         Players.PlayerAdded:Connect(hookPlayer)
-        for _, plr in ipairs(Players:GetPlayers()) do hookPlayer(plr) end
 
         task.spawn(function()
-            while state do
-                for _, plr in ipairs(Players:GetPlayers()) do dedupePlayer(plr) end
+            while AntiLagEnabled do
+                for _, plr in ipairs(Players:GetPlayers()) do
+                    dedupePlayer(plr)
+                end
+
                 task.wait(2)
             end
         end)
